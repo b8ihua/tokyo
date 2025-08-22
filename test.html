@@ -2,50 +2,87 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>残り距離表示</title>
+  <title>距離表示</title>
   <style>
     body {
-      font-family: sans-serif;
-      text-align: center;
-      margin-top: 50px;
+      font-family: "Helvetica", "Arial", sans-serif;
+      background-color: #f5f5f5;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
     }
-    #distance {
-      font-size: 2em;
+
+    .container {
+      background-color: #fff;
+      padding: 30px 40px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      text-align: center;
+    }
+
+    h2 {
+      margin-bottom: 20px;
+      color: #333;
+    }
+
+    p {
+      font-size: 1.2rem;
+      margin: 10px 0;
+      color: #555;
+    }
+
+    .distance {
       font-weight: bold;
-      color: darkblue;
+      font-size: 1.4rem;
+      color: #1e90ff;
     }
   </style>
 </head>
 <body>
-  <h1>ゴールまでの残り距離</h1>
-  <p id="distance">計算中...</p>
+  <div class="container">
+    <h2>現在の距離情報</h2>
+    <p>最も近いチェックポイント：<span id="nearest" class="distance">計算中...</span></p>
+    <p>ゴールまでの距離：<span id="goalDistance" class="distance">計算中...</span></p>
+  </div>
 
   <script>
-    // ゴール地点の緯度・経度を設定（例：東京駅）
-    const goalLat = 35.681236;
-    const goalLng = 139.767125;
+    const goal = { lat: 34.0166184, lng: 133.7832923 };
 
-    // 2点間の距離を計算する関数（ハーサインの公式）
-    function calcDistance(lat1, lng1, lat2, lng2) {
-      const R = 6371e3; // 地球の半径 (m)
+    const checkpoints = [
+      { name: "コンビニA", lat: 33.616, lng: 133.642 },
+      { name: "駅B", lat: 33.618, lng: 133.645 },
+      { name: "ランドマークC", lat: 33.620, lng: 133.650 },
+      { name: "コンビニD", lat: 33.622, lng: 133.655 },
+      { name: "公園E", lat: 33.625, lng: 133.660 },
+      { name: "コンビニF", lat: 33.627, lng: 133.665 },
+      { name: "駅G", lat: 33.630, lng: 133.670 },
+      { name: "ランドマークH", lat: 33.632, lng: 133.675 },
+      { name: "公園I", lat: 33.635, lng: 133.680 },
+      { name: "コンビニJ", lat: 33.637, lng: 133.685 }
+    ];
+
+    function calcDistance(lat1, lon1, lat2, lon2) {
+      const R = 6371e3; 
       const toRad = x => x * Math.PI / 180;
+
       const φ1 = toRad(lat1);
       const φ2 = toRad(lat2);
       const Δφ = toRad(lat2 - lat1);
-      const Δλ = toRad(lng2 - lng1);
+      const Δλ = toRad(lon2 - lon1);
 
-      const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
-                Math.cos(φ1) * Math.cos(φ2) *
-                Math.sin(Δλ/2) * Math.sin(Δλ/2);
+      const a = Math.sin(Δφ/2)**2 + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ/2)**2;
       const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
 
-      return R * c; // 距離 (m)
+      return R * c;
     }
 
-    // 現在地を取得して残り距離を表示
-    function updateDistance() {
+    function updateDistances() {
       if (!navigator.geolocation) {
-        document.getElementById("distance").textContent = "位置情報が使えません";
+        document.getElementById("nearest").textContent = "位置情報が利用できません";
+        document.getElementById("goalDistance").textContent = "位置情報が利用できません";
         return;
       }
 
@@ -53,25 +90,35 @@
         pos => {
           const lat = pos.coords.latitude;
           const lng = pos.coords.longitude;
-          const d = calcDistance(lat, lng, goalLat, goalLng);
 
-          let text;
-          if (d >= 1000) {
-            text = (d/1000).toFixed(2) + " km";
-          } else {
-            text = Math.round(d) + " m";
-          }
-          document.getElementById("distance").textContent = text;
+          // チェックポイントの距離計算
+          let nearest = null;
+          let minDist = Infinity;
+          checkpoints.forEach(cp => {
+            const d = calcDistance(lat, lng, cp.lat, cp.lng);
+            if (d < minDist) {
+              minDist = d;
+              nearest = cp;
+            }
+          });
+          const nearestText = minDist >= 1000 ? (minDist/1000).toFixed(2) + " km" : Math.round(minDist) + " m";
+          document.getElementById("nearest").textContent = `${nearest.name}（残り約 ${nearestText}）`;
+
+          // ゴールまでの距離
+          const dGoal = calcDistance(lat, lng, goal.lat, goal.lng);
+          const goalText = dGoal >= 1000 ? (dGoal/1000).toFixed(2) + " km" : Math.round(dGoal) + " m";
+          document.getElementById("goalDistance").textContent = `残り約 ${goalText}`;
         },
         err => {
-          document.getElementById("distance").textContent = "取得できません";
-        }
+          document.getElementById("nearest").textContent = "位置情報の取得に失敗しました";
+          document.getElementById("goalDistance").textContent = "位置情報の取得に失敗しました";
+        },
+        { enableHighAccuracy: true }
       );
     }
 
-    // ページを開いたら計算開始、10秒ごとに更新
-    updateDistance();
-    setInterval(updateDistance, 10000);
+    setInterval(updateDistances, 5000);
+    updateDistances();
   </script>
 </body>
 </html>
