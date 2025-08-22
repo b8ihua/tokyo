@@ -162,30 +162,38 @@ function updateDistances() {
       ];
 
       nextCPs.forEach((cp, idx) => {
-        const remaining = Math.max(0, dGoal - cp.distanceToGoal);
-        const distanceText = remaining >= 1000 ? (remaining/1000).toFixed(2) + " km" : Math.round(remaining) + " m";
+  const remaining = Math.max(0, dGoal - cp.distanceToGoal);
+  const distanceText = remaining >= 1000 ? (remaining/1000).toFixed(2) + " km" : Math.round(remaining) + " m";
 
-        const div = document.createElement("div");
-        div.className = "card";
-        div.style.background = colors[idx % colors.length];
+  const div = document.createElement("div");
+  div.className = "card";
 
-        const line1 = document.createElement("div");
-        line1.className = "line1";
-        const nameSpan = document.createElement("span");
-        nameSpan.textContent = cp.name;
-        const distSpan = document.createElement("span");
-        distSpan.textContent = distanceText;
-        line1.appendChild(nameSpan);
-        line1.appendChild(distSpan);
+  // カテゴリ別カラー設定
+  switch(cp.category) {
+    case "観光": div.style.background = "#282840"; break;
+    case "トンネル": div.style.background = "#315669"; break;
+    case "橋": div.style.background = "#348498"; break;
+    case "休憩場所": div.style.background = "#381327"; break;
+    default: div.style.background = "#3a3a5c";
+  }
 
-        const line2 = document.createElement("div");
-        line2.className = "line2";
-        line2.textContent = cp.desc;
+  const line1 = document.createElement("div");
+  line1.className = "line1";
+  const nameSpan = document.createElement("span");
+  nameSpan.textContent = cp.name;
+  const distSpan = document.createElement("span");
+  distSpan.textContent = distanceText;
+  line1.appendChild(nameSpan);
+  line1.appendChild(distSpan);
 
-        div.appendChild(line1);
-        div.appendChild(line2);
-        container.appendChild(div);
-      });
+  const line2 = document.createElement("div");
+  line2.className = "line2";
+  line2.textContent = cp.desc;
+
+  div.appendChild(line1);
+  div.appendChild(line2);
+  container.appendChild(div);
+});
 
     },
     err => {
