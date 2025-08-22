@@ -23,48 +23,59 @@
       box-shadow: 0 8px 20px rgba(0,0,0,0.4);
     }
 
-    .distance {
-      font-size: 1.6rem;
-      font-weight: bold;
-      color: #1e90ff;
-      margin-bottom: 15px;
-    }
-
-    .checkpoint {
-      font-size: 1.2rem;
+    .goal, .checkpoint {
       background-color: #3a3a5c;
-      padding: 12px;
       border-radius: 12px;
-      margin-bottom: 10px;
+      padding: 12px 15px;
+      margin-bottom: 12px;
       box-shadow: inset 0 -2px 4px rgba(0,0,0,0.3);
     }
 
+    .goal .line1, .checkpoint .line1 {
+      display: flex;
+      justify-content: space-between;
+      font-weight: bold;
+      font-size: 1.4rem;
+    }
+
+    .goal .line2, .checkpoint .line2 {
+      font-size: 1rem;
+      color: #ccc;
+      margin-top: 4px;
+      text-align: right;
+    }
+
     @media (max-width: 400px) {
-      .distance { font-size: 1.4rem; }
-      .checkpoint { font-size: 1rem; padding: 10px; }
+      .goal .line1, .checkpoint .line1 { font-size: 1.2rem; }
+      .goal .line2, .checkpoint .line2 { font-size: 0.9rem; }
     }
   </style>
 </head>
 <body>
   <div class="card">
-    <div class="distance" id="goalDistance">計算中...</div>
+    <div id="goal" class="goal">
+      <div class="line1"><span id="goalName">池田町白地</span><span id="goalDistance">計算中...</span></div>
+      <div class="line2" id="goalTime">計算中...</div>
+    </div>
     <div id="checkpointsContainer">
-      <div class="checkpoint">計算中...</div>
+      <div class="checkpoint">
+        <div class="line1">計算中...<span></span></div>
+        <div class="line2">説明</div>
+      </div>
     </div>
   </div>
 
   <script>
-    const goal = { lat: 34.0166184, lng: 133.7832923 };
+    const goal = { lat: 34.0166184, lng: 133.7832923, name: "池田町白地" };
 
-    // チェックポイントをゴールまでの距離（m）で設定（大→小）
     const checkpoints = [
-      { name: "コンビニA", distanceToGoal: 10000 },
-      { name: "駅B", distanceToGoal: 8000 },
-      { name: "ランドマークC", distanceToGoal: 5000 },
-      { name: "公園D", distanceToGoal: 3000 },
-      { name: "コンビニE", distanceToGoal: 2000 },
-      { name: "駅F", distanceToGoal: 1000 },
-      { name: "ゴール", distanceToGoal: 0 }
+      { name: "コンビニA", distanceToGoal: 10000, desc: "休憩スポット" },
+      { name: "駅B", distanceToGoal: 8000, desc: "トイレあり" },
+      { name: "ランドマークC", distanceToGoal: 5000, desc: "案内板あり" },
+      { name: "公園D", distanceToGoal: 3000, desc: "広場" },
+      { name: "コンビニE", distanceToGoal: 2000, desc: "飲み物購入可" },
+      { name: "駅F", distanceToGoal: 1000, desc: "出口付近" },
+      { name: "ゴール", distanceToGoal: 0, desc: "到着" }
     ];
 
     function calcDistance(lat1, lon1, lat2, lon2) {
@@ -80,7 +91,6 @@
     }
 
     function getNextCheckpoints(dGoal, count = 3) {
-      // 未通過のチェックポイントを順番に取得
       const next = [];
       for (let i = 0; i < checkpoints.length; i++) {
         if (dGoal > checkpoints[i].distanceToGoal) {
@@ -88,9 +98,8 @@
           if (next.length >= count) break;
         }
       }
-      // 足りない場合はゴールも追加
       while (next.length < count && next[next.length - 1]?.name !== "ゴール") {
-        next.push({ name: "ゴール", distanceToGoal: 0 });
+        next.push({ name: "ゴール", distanceToGoal: 0, desc: "到着" });
       }
       return next;
     }
@@ -98,7 +107,8 @@
     function updateDistances() {
       if (!navigator.geolocation) {
         document.getElementById("goalDistance").textContent = "位置情報が利用できません";
-        document.getElementById("checkpointsContainer").innerHTML = "<div class='checkpoint'>位置情報が利用できません</div>";
+        document.getElementById("goalTime").textContent = "";
+        document.getElementById("checkpointsContainer").innerHTML = "<div class='checkpoint'><div class='line1'>位置情報が利用できません</div><div class='line2'></div></div>";
         return;
       }
 
@@ -108,26 +118,49 @@
           const lng = pos.coords.longitude;
 
           const dGoal = calcDistance(lat, lng, goal.lat, goal.lng);
-          const goalText = dGoal >= 1000 ? (dGoal/1000).toFixed(2) + " km" : Math.round(dGoal) + " m";
-          document.getElementById("goalDistance").textContent = `ゴールまで残り約 ${goalText}`;
 
+          // ゴールまで距離と所要時間
+          const goalText = dGoal >= 1000 ? (dGoal/1000).toFixed(2) + " km" : Math.round(dGoal) + " m";
+          const timeMin = Math.round((dGoal / 1000) / 0.7408); // 概算分
+          document.getElementById("goalDistance").textContent = goalText;
+          document.getElementById("goalTime").textContent = `約${timeMin}分`;
+
+          // チェックポイント
           const nextCPs = getNextCheckpoints(dGoal, 3);
           const container = document.getElementById("checkpointsContainer");
-          container.innerHTML = ""; // 前回分クリア
+          container.innerHTML = "";
 
           nextCPs.forEach(cp => {
             const remaining = dGoal - cp.distanceToGoal;
-            const text = remaining >= 1000 ? (remaining/1000).toFixed(2) + " km" : Math.round(remaining) + " m";
+            const distanceText = remaining >= 1000 ? (remaining/1000).toFixed(2) + " km" : Math.round(remaining) + " m";
+
             const div = document.createElement("div");
             div.className = "checkpoint";
-            div.textContent = `${cp.name}（残り約 ${text}）`;
+
+            const line1 = document.createElement("div");
+            line1.className = "line1";
+            const nameSpan = document.createElement("span");
+            nameSpan.textContent = cp.name;
+            const distSpan = document.createElement("span");
+            distSpan.textContent = distanceText;
+            line1.appendChild(nameSpan);
+            line1.appendChild(distSpan);
+
+            const line2 = document.createElement("div");
+            line2.className = "line2";
+            line2.textContent = cp.desc;
+
+            div.appendChild(line1);
+            div.appendChild(line2);
+
             container.appendChild(div);
           });
 
         },
         err => {
           document.getElementById("goalDistance").textContent = "位置情報の取得に失敗しました";
-          document.getElementById("checkpointsContainer").innerHTML = "<div class='checkpoint'>位置情報の取得に失敗しました</div>";
+          document.getElementById("goalTime").textContent = "";
+          document.getElementById("checkpointsContainer").innerHTML = "<div class='checkpoint'><div class='line1'>位置情報の取得に失敗しました</div><div class='line2'></div></div>";
         },
         { enableHighAccuracy: true }
       );
