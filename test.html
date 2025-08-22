@@ -17,7 +17,6 @@
       padding:5px;
       max-width: 400px;
       margin: 0 auto;
-      
     }
 
     .checkpoint {
@@ -25,15 +24,13 @@
       border-radius: 5px;
       padding: 22px 15px;
       margin-bottom: 12px;
-      
     }
 
- .goal {
+    .goal {
       background-color: #3a3a5c;
       border-radius: 0px;
       padding: 22px 15px;
       margin-bottom: 12px;
-      
     }
 
     .goal .line1, .checkpoint .line1 {
@@ -58,122 +55,128 @@
 </head>
 <body>
 <div id="goal" class="goal">
-      <div class="line1"><span id="goalName">池田町白地</span><span id="goalDistance">計算中...</span></div>
-      <div class="line2" id="goalTime">計算中...</div>
-    </div>
-  <div class="card">
-    
-    <div id="checkpointsContainer">
-      <div class="checkpoint">
-        <div class="line1">計算中...<span></span></div>
-        <div class="line2">説明</div>
-      </div>
+  <div class="line1"><span id="goalName">池田町白地</span><span id="goalDistance">計算中...</span></div>
+  <div class="line2" id="goalTime">計算中...</div>
+</div>
+<div class="card">
+  <div id="checkpointsContainer">
+    <div class="checkpoint">
+      <div class="line1">計算中...<span></span></div>
+      <div class="line2">説明</div>
     </div>
   </div>
+</div>
 
-  <script>
-    const goal = { lat: 34.0166184, lng: 133.7832923, name: "池田町白地" };
+<script>
+const goal = { lat: 34.0166184, lng: 133.7832923, name: "池田町白地" };
 
-    const checkpoints = [
-      { name: "コンビニA", distanceToGoal: 10000, desc: "休憩スポット" },
-      { name: "駅B", distanceToGoal: 8000, desc: "トイレあり" },
-      { name: "ランドマークC", distanceToGoal: 5000, desc: "案内板あり" },
-      { name: "公園D", distanceToGoal: 3000, desc: "広場" },
-      { name: "コンビニE", distanceToGoal: 2000, desc: "飲み物購入可" },
-      { name: "駅F", distanceToGoal: 1000, desc: "出口付近" },
-      { name: "ゴール", distanceToGoal: 0, desc: "到着" }
-    ];
+// チェックポイントにカテゴリを追加
+const checkpoints = [
+  { name: "観光スポットA", distanceToGoal: 12000, desc: "観光名所", category: "観光" },
+  { name: "観光スポットB", distanceToGoal: 7000, desc: "有名な建物", category: "観光" },
+  { name: "トンネルA", distanceToGoal: 9000, desc: "長いトンネル", category: "トンネル" },
+  { name: "トンネルB", distanceToGoal: 3000, desc: "小さめのトンネル", category: "トンネル" },
+  { name: "橋A", distanceToGoal: 8000, desc: "川にかかる橋", category: "橋" },
+  { name: "橋B", distanceToGoal: 2000, desc: "歩行者橋", category: "橋" },
+  { name: "休憩所A", distanceToGoal: 5000, desc: "ベンチあり", category: "休憩場所" },
+  { name: "休憩所B", distanceToGoal: 1000, desc: "自販機あり", category: "休憩場所" },
+];
 
-    function calcDistance(lat1, lon1, lat2, lon2) {
-      const R = 6371e3; 
-      const toRad = x => x * Math.PI / 180;
-      const φ1 = toRad(lat1);
-      const φ2 = toRad(lat2);
-      const Δφ = toRad(lat2 - lat1);
-      const Δλ = toRad(lon2 - lon1);
-      const a = Math.sin(Δφ/2)**2 + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ/2)**2;
-      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-      return R * c;
+function calcDistance(lat1, lon1, lat2, lon2) {
+  const R = 6371e3;
+  const toRad = x => x * Math.PI / 180;
+  const φ1 = toRad(lat1);
+  const φ2 = toRad(lat2);
+  const Δφ = toRad(lat2 - lat1);
+  const Δλ = toRad(lon2 - lon1);
+  const a = Math.sin(Δφ/2)**2 + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ/2)**2;
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  return R * c;
+}
+
+// 各カテゴリで最も近いチェックポイントを取得
+function getClosestByCategory(dGoal) {
+  const categories = ["観光","トンネル","橋","休憩場所"];
+  const closest = [];
+
+  categories.forEach(cat => {
+    const filtered = checkpoints.filter(cp => cp.category === cat);
+    if (filtered.length > 0) {
+      // ゴールに最も近いもの（distanceToGoal が小さい）
+      let nearest = filtered.reduce((prev, curr) => {
+        return Math.abs(dGoal - curr.distanceToGoal) < Math.abs(dGoal - prev.distanceToGoal) ? curr : prev;
+      });
+      closest.push(nearest);
     }
+  });
 
-    function getNextCheckpoints(dGoal, count = 3) {
-      const next = [];
-      for (let i = 0; i < checkpoints.length; i++) {
-        if (dGoal > checkpoints[i].distanceToGoal) {
-          next.push(checkpoints[i]);
-          if (next.length >= count) break;
-        }
-      }
-      while (next.length < count && next[next.length - 1]?.name !== "ゴール") {
-        next.push({ name: "ゴール", distanceToGoal: 0, desc: "到着" });
-      }
-      return next;
-    }
+  return closest;
+}
 
-    function updateDistances() {
-      if (!navigator.geolocation) {
-        document.getElementById("goalDistance").textContent = "位置情報が利用できません";
-        document.getElementById("goalTime").textContent = "";
-        document.getElementById("checkpointsContainer").innerHTML = "<div class='checkpoint'><div class='line1'>位置情報が利用できません</div><div class='line2'></div></div>";
-        return;
-      }
+function updateDistances() {
+  if (!navigator.geolocation) {
+    document.getElementById("goalDistance").textContent = "位置情報が利用できません";
+    document.getElementById("goalTime").textContent = "";
+    document.getElementById("checkpointsContainer").innerHTML = "<div class='checkpoint'><div class='line1'>位置情報が利用できません</div><div class='line2'></div></div>";
+    return;
+  }
 
-      navigator.geolocation.getCurrentPosition(
-        pos => {
-          const lat = pos.coords.latitude;
-          const lng = pos.coords.longitude;
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      const lat = pos.coords.latitude;
+      const lng = pos.coords.longitude;
 
-          const dGoal = calcDistance(lat, lng, goal.lat, goal.lng);
+      const dGoal = calcDistance(lat, lng, goal.lat, goal.lng);
 
-          // ゴールまで距離と所要時間
-          const goalText = dGoal >= 1000 ? (dGoal/1000).toFixed(2) + " km" : Math.round(dGoal) + " m";
-          const timeMin = Math.round((dGoal / 1000) / 0.7408); // 概算分
-          document.getElementById("goalDistance").textContent = goalText;
-          document.getElementById("goalTime").textContent = `約${timeMin}分`;
+      // ゴールまで距離と所要時間
+      const goalText = dGoal >= 1000 ? (dGoal/1000).toFixed(2) + " km" : Math.round(dGoal) + " m";
+      const timeMin = Math.round((dGoal / 1000) / 0.7408);
+      document.getElementById("goalDistance").textContent = goalText;
+      document.getElementById("goalTime").textContent = `約${timeMin}分`;
 
-          // チェックポイント
-          const nextCPs = getNextCheckpoints(dGoal, 3);
-          const container = document.getElementById("checkpointsContainer");
-          container.innerHTML = "";
+      // カテゴリごとの最も近いチェックポイント
+      const nextCPs = getClosestByCategory(dGoal);
+      const container = document.getElementById("checkpointsContainer");
+      container.innerHTML = "";
 
-          nextCPs.forEach(cp => {
-            const remaining = dGoal - cp.distanceToGoal;
-            const distanceText = remaining >= 1000 ? (remaining/1000).toFixed(2) + " km" : Math.round(remaining) + " m";
+      nextCPs.forEach(cp => {
+        const remaining = dGoal - cp.distanceToGoal;
+        const distanceText = remaining >= 1000 ? (remaining/1000).toFixed(2) + " km" : Math.round(remaining) + " m";
 
-            const div = document.createElement("div");
-            div.className = "checkpoint";
+        const div = document.createElement("div");
+        div.className = "checkpoint";
 
-            const line1 = document.createElement("div");
-            line1.className = "line1";
-            const nameSpan = document.createElement("span");
-            nameSpan.textContent = cp.name;
-            const distSpan = document.createElement("span");
-            distSpan.textContent = distanceText;
-            line1.appendChild(nameSpan);
-            line1.appendChild(distSpan);
+        const line1 = document.createElement("div");
+        line1.className = "line1";
+        const nameSpan = document.createElement("span");
+        nameSpan.textContent = cp.name;
+        const distSpan = document.createElement("span");
+        distSpan.textContent = distanceText;
+        line1.appendChild(nameSpan);
+        line1.appendChild(distSpan);
 
-            const line2 = document.createElement("div");
-            line2.className = "line2";
-            line2.textContent = cp.desc;
+        const line2 = document.createElement("div");
+        line2.className = "line2";
+        line2.textContent = cp.desc;
 
-            div.appendChild(line1);
-            div.appendChild(line2);
+        div.appendChild(line1);
+        div.appendChild(line2);
 
-            container.appendChild(div);
-          });
+        container.appendChild(div);
+      });
 
-        },
-        err => {
-          document.getElementById("goalDistance").textContent = "位置情報の取得に失敗しました";
-          document.getElementById("goalTime").textContent = "";
-          document.getElementById("checkpointsContainer").innerHTML = "<div class='checkpoint'><div class='line1'>位置情報の取得に失敗しました</div><div class='line2'></div></div>";
-        },
-        { enableHighAccuracy: true }
-      );
-    }
+    },
+    err => {
+      document.getElementById("goalDistance").textContent = "位置情報の取得に失敗しました";
+      document.getElementById("goalTime").textContent = "";
+      document.getElementById("checkpointsContainer").innerHTML = "<div class='checkpoint'><div class='line1'>位置情報の取得に失敗しました</div><div class='line2'></div></div>";
+    },
+    { enableHighAccuracy: true }
+  );
+}
 
-    setInterval(updateDistances, 5000);
-    updateDistances();
-  </script>
+setInterval(updateDistances, 5000);
+updateDistances();
+</script>
 </body>
 </html>
