@@ -49,13 +49,13 @@ body {
 
 <div class="card-container">
   <!-- ゴールカード -->
-  <div id="goal" class="card" style="background: linear-gradient(90deg, #3a3a5c, #4a4a7c);">
+  <div id="goal" class="card" style="background:#444470;">
     <div class="line1"><span id="goalName">池田町白地</span><span id="goalDistance">計算中...</span></div>
     <div class="line2" id="goalTime">計算中...</div>
   </div>
 
   <!-- 現在地カード -->
-  <div id="currentLocation" class="card" style="background: linear-gradient(90deg, #4a7c4a, #7cac4a);">
+  <div id="currentLocation" class="card" style="background:#69A14B;">
     <div class="line1"><span id="currentName">現在地</span><span></span></div>
     <div class="line2" id="currentDesc">計算中...</div>
   </div>
@@ -75,9 +75,17 @@ const checkpoints = [
   { name: "トンネルB", distanceToGoal: 3000, desc: "小さめのトンネル", category: "トンネル" },
   { name: "橋A", distanceToGoal: 8000, desc: "川にかかる橋", category: "橋" },
   { name: "橋B", distanceToGoal: 2000, desc: "歩行者橋", category: "橋" },
-  { name: "休憩所A", distanceToGoal: 5000, desc: "ベンチあり", category: "休憩場所" },
-  { name: "休憩所B", distanceToGoal: 1000, desc: "自販機あり", category: "休憩場所" },
+  { name: "休憩所A", distanceToGoal: 5000, desc: "ベンチあり", category: "休憩所" },
+  { name: "休憩所B", distanceToGoal: 1000, desc: "自販機あり", category: "休憩所" },
 ];
+
+// カテゴリごとの色
+const categoryColors = {
+  "観光": "#282840",
+  "トンネル": "#323247",
+  "橋": "#3D3D53",
+  "休憩所": "#4F4F64"
+};
 
 // 距離計算
 function calcDistance(lat1, lon1, lat2, lon2) {
@@ -94,7 +102,7 @@ function calcDistance(lat1, lon1, lat2, lon2) {
 
 // カテゴリごとに最も近いチェックポイントを取得
 function getClosestByCategory(dGoal) {
-  const categories = ["観光","トンネル","橋","休憩場所"];
+  const categories = ["観光","トンネル","橋","休憩所"];
   const closest = [];
 
   categories.forEach(cat => {
@@ -153,47 +161,31 @@ function updateDistances() {
       const container = document.getElementById("checkpointsContainer");
       container.innerHTML = "";
 
-      // グラデーションカラー配列
-      const colors = [
-        "381327",
-        "282840",
-        "315669",
-        "348498"
-      ];
+      nextCPs.forEach(cp => {
+        const remaining = Math.max(0, dGoal - cp.distanceToGoal);
+        const distanceText = remaining >= 1000 ? (remaining/1000).toFixed(2) + " km" : Math.round(remaining) + " m";
 
-      nextCPs.forEach((cp, idx) => {
-  const remaining = Math.max(0, dGoal - cp.distanceToGoal);
-  const distanceText = remaining >= 1000 ? (remaining/1000).toFixed(2) + " km" : Math.round(remaining) + " m";
+        const div = document.createElement("div");
+        div.className = "card";
+        div.style.background = categoryColors[cp.category] || "#333";
 
-  const div = document.createElement("div");
-  div.className = "card";
+        const line1 = document.createElement("div");
+        line1.className = "line1";
+        const nameSpan = document.createElement("span");
+        nameSpan.textContent = cp.name;
+        const distSpan = document.createElement("span");
+        distSpan.textContent = distanceText;
+        line1.appendChild(nameSpan);
+        line1.appendChild(distSpan);
 
-  // カテゴリ別カラー設定
-  switch(cp.category) {
-    case "観光": div.style.background = "#282840"; break;
-    case "トンネル": div.style.background = "#315669"; break;
-    case "橋": div.style.background = "#348498"; break;
-    case "休憩場所": div.style.background = "#381327"; break;
-    default: div.style.background = "#3a3a5c";
-  }
+        const line2 = document.createElement("div");
+        line2.className = "line2";
+        line2.textContent = cp.desc;
 
-  const line1 = document.createElement("div");
-  line1.className = "line1";
-  const nameSpan = document.createElement("span");
-  nameSpan.textContent = cp.name;
-  const distSpan = document.createElement("span");
-  distSpan.textContent = distanceText;
-  line1.appendChild(nameSpan);
-  line1.appendChild(distSpan);
-
-  const line2 = document.createElement("div");
-  line2.className = "line2";
-  line2.textContent = cp.desc;
-
-  div.appendChild(line1);
-  div.appendChild(line2);
-  container.appendChild(div);
-});
+        div.appendChild(line1);
+        div.appendChild(line2);
+        container.appendChild(div);
+      });
 
     },
     err => {
