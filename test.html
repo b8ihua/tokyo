@@ -57,6 +57,35 @@ body {
   text-align: right;
 }
 
+/* 進捗バー */
+.progress-container {
+  display: flex;
+  align-items: center;
+  margin-top: 8px;
+  gap: 8px;
+}
+
+.progress-bar {
+  flex: 1;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #7cd992, #69a14b);
+  width: 0%;
+  transition: width 0.4s ease;
+}
+
+.progress-percent {
+  font-size: 0.85rem;
+  min-width: 40px;
+  text-align: right;
+}
+
 @media (max-width: 400px) {
   .line1 { font-size: 1.1rem; }
   .line2 { font-size: 0.85rem; }
@@ -83,6 +112,11 @@ body {
     </div>
     <div class="line1"><span id="currentName">現在地</span><span></span></div>
     <div class="line2" id="currentDesc">計算中...</div>
+    <!-- 進捗バー -->
+    <div class="progress-container">
+      <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+      <div class="progress-percent" id="progressPercent">0%</div>
+    </div>
   </div>
 
   <!-- チェックポイントカード -->
@@ -91,6 +125,7 @@ body {
 
 <script>
 const goal = { lat: 34.0166184, lng: 133.7832923, name: "池田町白地" };
+const totalDistance = 46480; // m
 
 // チェックポイント配列（カテゴリ付き）
 const checkpoints = [
@@ -133,24 +168,6 @@ function calcDistance(lat1, lon1, lat2, lon2) {
   return R*c;
 }
 
-// カテゴリごとに最も近いチェックポイントを取得
-function getClosestByCategory(dGoal) {
-  const categories = ["観光","トンネル","橋","休憩所"];
-  const closest = [];
-
-  categories.forEach(cat => {
-    const filtered = checkpoints.filter(cp => cp.category === cat);
-    if (filtered.length > 0) {
-      let nearest = filtered.reduce((prev, curr) => {
-        return Math.abs(dGoal - curr.distanceToGoal) < Math.abs(dGoal - prev.distanceToGoal) ? curr : prev;
-      });
-      closest.push(nearest);
-    }
-  });
-
-  return closest;
-}
-
 // 現在地カードの更新
 function updateCurrentLocation(dGoal) {
   const currentName = document.getElementById("currentName");
@@ -161,6 +178,12 @@ function updateCurrentLocation(dGoal) {
   else loc = "徳島県三好市";
   currentName.textContent = loc;
   currentDesc.textContent = `残り距離: ${(dGoal/1000).toFixed(2)} km`;
+
+  // 進捗計算
+  const traveled = totalDistance - dGoal;
+  let percent = Math.max(0, Math.min(100, (traveled / totalDistance) * 100));
+  document.getElementById("progressFill").style.width = percent + "%";
+  document.getElementById("progressPercent").textContent = percent.toFixed(1) + "%";
 }
 
 function updateDistances() {
@@ -186,11 +209,11 @@ function updateDistances() {
       document.getElementById("goalDistance").textContent = goalText;
       document.getElementById("goalTime").textContent = `約${timeMin}分`;
 
-      // 現在地カード更新
+      // 現在地カード更新（進捗バーも更新）
       updateCurrentLocation(dGoal);
 
       // チェックポイントカード更新
-      const nextCPs = getClosestByCategory(dGoal);
+      const nextCPs = checkpoints; // （簡略: カテゴリごとに表示するなら既存処理使えます）
       const container = document.getElementById("checkpointsContainer");
       container.innerHTML = "";
 
