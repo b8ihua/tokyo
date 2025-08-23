@@ -2,6 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
 <title>ナビ距離表示</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
@@ -23,6 +24,15 @@ body {
   margin: 0; /* タイル状に隙間なし */
   border-radius: 0; /* 四角 */
   color: #fff;
+  position: relative;
+}
+
+.card-title {
+  font-size: 0.8rem;
+  font-weight: bold;
+  opacity: 0.8;
+  margin-bottom: 0px;
+  margin-left:-3px;
 }
 
 .line1 {
@@ -42,6 +52,7 @@ body {
 @media (max-width: 400px) {
   .line1 { font-size: 1.2rem; }
   .line2 { font-size: 0.9rem; }
+  .card-title { font-size: 0.9rem; }
 }
 </style>
 </head>
@@ -50,12 +61,18 @@ body {
 <div class="card-container">
   <!-- ゴールカード -->
   <div id="goal" class="card" style="background:#444470;">
+    <div class="card-title"><span class="material-symbols-outlined" style="font-size:1.6rem; vertical-align:-5px">
+flag
+</span></div>
     <div class="line1"><span id="goalName">池田町白地</span><span id="goalDistance">計算中...</span></div>
     <div class="line2" id="goalTime">計算中...</div>
   </div>
 
   <!-- 現在地カード -->
   <div id="currentLocation" class="card" style="background:#69A14B;">
+    <div class="card-title"><span class="material-symbols-outlined" style="font-size:1.6rem; vertical-align:-5px">
+navigation
+</span></div>
     <div class="line1"><span id="currentName">現在地</span><span></span></div>
     <div class="line2" id="currentDesc">計算中...</div>
   </div>
@@ -84,7 +101,15 @@ const categoryColors = {
   "観光": "#282840",
   "トンネル": "#323247",
   "橋": "#3D3D53",
-  "休憩所": "#4F4F64"
+  "休憩所": "#3D3D53"
+};
+
+// カテゴリごとの表示タイトル
+const categoryTitles = {
+  "観光": "チェックポイント",
+  "トンネル": "トンネル",
+  "橋": "橋梁",
+  "休憩所": "休憩所"
 };
 
 // 距離計算
@@ -169,6 +194,10 @@ function updateDistances() {
         div.className = "card";
         div.style.background = categoryColors[cp.category] || "#333";
 
+        const titleDiv = document.createElement("div");
+        titleDiv.className = "card-title";
+        titleDiv.textContent = categoryTitles[cp.category] || "チェックポイント";
+
         const line1 = document.createElement("div");
         line1.className = "line1";
         const nameSpan = document.createElement("span");
@@ -182,6 +211,7 @@ function updateDistances() {
         line2.className = "line2";
         line2.textContent = cp.desc;
 
+        div.appendChild(titleDiv);
         div.appendChild(line1);
         div.appendChild(line2);
         container.appendChild(div);
