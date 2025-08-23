@@ -103,6 +103,11 @@ body {
     </div>
     <div class="line1"><span id="goalName">池田町白地</span><span id="goalDistance">計算中...</span></div>
     <div class="line2" id="goalTime">計算中...</div>
+<!-- 進捗バー -->
+    <div class="progress-container">
+      <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+      <div class="progress-percent" id="progressPercent">0%</div>
+    </div>
   </div>
 
   <!-- 現在地カード -->
@@ -112,11 +117,7 @@ body {
     </div>
     <div class="line1"><span id="currentName">現在地</span><span></span></div>
     <div class="line2" id="currentDesc">計算中...</div>
-    <!-- 進捗バー -->
-    <div class="progress-container">
-      <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
-      <div class="progress-percent" id="progressPercent">0%</div>
-    </div>
+    
   </div>
 
   <!-- チェックポイントカード -->
@@ -177,7 +178,7 @@ function updateCurrentLocation(dGoal) {
   else if (dGoal > 20000) loc = "高知県大豊町";
   else loc = "徳島県三好市";
   currentName.textContent = loc;
-  currentDesc.textContent = `残り距離: ${(dGoal/1000).toFixed(2)} km`;
+  currentDesc.textContent = `走行距離: ${Math.max(0, (46.48 - dGoal/1000)).toFixed(2)} km`;
 
   // 進捗計算
   const traveled = totalDistance - dGoal;
