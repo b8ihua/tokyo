@@ -7,8 +7,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
 body {
-  font-family: "Helvetica", "Arial", sans-serif;
-  background-color: #1e1e2f;
+  font-family: "Helvetica Neue", "Arial", sans-serif;
+  background-color: #1c1c1e;
   color: #fff;
   margin: 0;
   padding: 0;
@@ -16,43 +16,51 @@ body {
 
 .card-container {
   max-width: 400px;
-  margin: 0 auto;
+  margin: 20px auto;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 6px;
+  overflow: hidden;
 }
 
 .card {
-  padding: 20px 15px;
-  margin: 0; /* タイル状に隙間なし */
-  border-radius: 0; /* 四角 */
+  padding: 18px 15px;
+  margin: 0;
   color: #fff;
   position: relative;
+}
+
+.card + .card {
+  border-top: 1px solid rgba(255, 255, 255, 0.12); /* カード間の仕切り線 */
 }
 
 .card-title {
   font-size: 0.8rem;
   font-weight: bold;
-  opacity: 0.8;
-  margin-bottom: 0px;
-  margin-left:-3px;
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .line1 {
   display: flex;
   justify-content: space-between;
   font-weight: bold;
-  font-size: 1.4rem;
+  font-size: 1.3rem;
 }
 
 .line2 {
-  font-size: 1rem;
+  font-size: 0.95rem;
   color: #ccc;
   margin-top: 4px;
   text-align: right;
 }
 
 @media (max-width: 400px) {
-  .line1 { font-size: 1.2rem; }
-  .line2 { font-size: 0.9rem; }
-  .card-title { font-size: 0.9rem; }
+  .line1 { font-size: 1.1rem; }
+  .line2 { font-size: 0.85rem; }
+  .card-title { font-size: 0.75rem; }
 }
 </style>
 </head>
@@ -61,18 +69,18 @@ body {
 <div class="card-container">
   <!-- ゴールカード -->
   <div id="goal" class="card" style="background:#444470;">
-    <div class="card-title"><span class="material-symbols-outlined" style="font-size:1.6rem; vertical-align:-5px">
-flag
-</span></div>
+    <div class="card-title">
+      <span class="material-symbols-outlined" style="font-size:1.2rem;">flag</span>目的地
+    </div>
     <div class="line1"><span id="goalName">池田町白地</span><span id="goalDistance">計算中...</span></div>
     <div class="line2" id="goalTime">計算中...</div>
   </div>
 
   <!-- 現在地カード -->
   <div id="currentLocation" class="card" style="background:#69A14B;">
-    <div class="card-title"><span class="material-symbols-outlined" style="font-size:1.6rem; vertical-align:-5px">
-navigation
-</span></div>
+    <div class="card-title">
+      <span class="material-symbols-outlined" style="font-size:1.2rem;">navigation</span>現在地
+    </div>
     <div class="line1"><span id="currentName">現在地</span><span></span></div>
     <div class="line2" id="currentDesc">計算中...</div>
   </div>
@@ -96,12 +104,12 @@ const checkpoints = [
   { name: "休憩所B", distanceToGoal: 1000, desc: "自販機あり", category: "休憩所" },
 ];
 
-// カテゴリごとの色
+// カテゴリごとの色（すべて統一）
 const categoryColors = {
-  "観光": "#282840",
+  "観光": "#323247",
   "トンネル": "#323247",
-  "橋": "#3D3D53",
-  "休憩所": "#3D3D53"
+  "橋": "#323247",
+  "休憩所": "#323247"
 };
 
 // カテゴリごとの表示タイトル
@@ -192,7 +200,7 @@ function updateDistances() {
 
         const div = document.createElement("div");
         div.className = "card";
-        div.style.background = categoryColors[cp.category] || "#333";
+        div.style.background = categoryColors[cp.category];
 
         const titleDiv = document.createElement("div");
         titleDiv.className = "card-title";
